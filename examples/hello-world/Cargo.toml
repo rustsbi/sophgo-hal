@@ -1,0 +1,11 @@
+[package]
+name = "hello-world"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+uart16550 = "0.0.1"
+sophgo-rom-rt = { version = "0.0.0", path = "../../sophgo-rom-rt" }
+panic-halt = "0.2.0"

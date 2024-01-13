@@ -1,0 +1,7 @@
+[workspace]
+resolver = "2"
+members = [
+    "sophgo-rom-rt",
+    "sophgo-rom-rt/macros",
+    "examples/hello-world",
+]
