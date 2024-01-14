@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "sophgo-hal",
     "sophgo-rom-rt",
     "sophgo-rom-rt/macros",
     "sophgo-rom-tool",
