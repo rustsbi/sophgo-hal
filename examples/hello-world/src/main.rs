@@ -12,5 +12,6 @@ fn main() -> ! {
     let uart = unsafe { &*(0x04140000 as *const uart16550::Uart16550<u32>) };
     loop {
         uart.write(b"Hello World from Rust!\n");
+        // TODO fix Uart16550 crate bug; it doesn't block when UART FIFO is not empty
     }
 }

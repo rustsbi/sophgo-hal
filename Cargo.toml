@@ -3,5 +3,6 @@ resolver = "2"
 members = [
     "sophgo-rom-rt",
     "sophgo-rom-rt/macros",
+    "sophgo-rom-tool",
     "examples/hello-world",
 ]
