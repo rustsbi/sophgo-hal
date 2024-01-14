@@ -3,6 +3,14 @@
 
 pub use sophgo_rom_rt_macros::entry;
 
+use base_address::Static;
+
+/// Peripherals available on ROM start.
+pub struct Peripherals {
+    /// Universal Asynchronous Receiver/Transmitter 0.
+    pub uart0: sophgo_hal::UART<Static<0x04140000>>,
+}
+
 #[cfg(target_arch = "riscv64")]
 use core::arch::asm;
 

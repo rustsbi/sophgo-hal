@@ -15,7 +15,7 @@ pub fn entry(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let f = parse_macro_input!(input as ItemFn);
 
-    if f.sig.inputs.len() != 0 {
+    if f.sig.inputs.len() != 1 {
         return parse::Error::new(
             f.sig.inputs.span(),
             "`#[entry]` function without rom peripherals should not include any parameter",
@@ -35,7 +35,7 @@ pub fn entry(args: TokenStream, input: TokenStream) -> TokenStream {
     if !valid_signature {
         return parse::Error::new(
             f.sig.span(),
-            "`#[entry]` function must have signature `[unsafe] fn() -> !`",
+            "`#[entry]` function must have signature `[unsafe] fn(Peripherals) -> !`",
         )
         .to_compile_error()
         .into();
@@ -44,12 +44,18 @@ pub fn entry(args: TokenStream, input: TokenStream) -> TokenStream {
     let attrs = f.attrs;
     let unsafety = f.sig.unsafety;
     let stmts = f.block.stmts;
+    let inputs = f.sig.inputs;
 
     quote!(
-        #[allow(non_snake_case)]
         #[export_name = "main"]
+        pub extern "C" fn main() -> ! {
+            let p = unsafe { core::mem::transmute(()) };
+            unsafe { __sophgo_rom_rt_macros__main(p) }
+        }
+        #[allow(non_snake_case)]
+        #[inline(always)]
         #(#attrs)*
-        pub #unsafety fn main() -> ! {
+        #unsafety fn __sophgo_rom_rt_macros__main(#inputs) -> ! {
             #(#stmts)*
         }
     )

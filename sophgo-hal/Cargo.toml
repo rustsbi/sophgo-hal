@@ -9,3 +9,5 @@ repository.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+base-address = "0.0.0"
+uart16550 = "0.0.1"

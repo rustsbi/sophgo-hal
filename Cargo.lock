@@ -51,6 +51,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "base-address"
+version = "0.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "66e5a45018e1b85498d7bf240d0f1bad798aeb5a162b2b59c82e950f0ea3ccb3"
+
+[[package]]
 name = "clap"
 version = "4.4.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -119,11 +125,10 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 
 [[package]]
 name = "hello-world"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "panic-halt",
  "sophgo-rom-rt",
- "uart16550",
 ]
 
 [[package]]
@@ -153,11 +158,17 @@ dependencies = [
 [[package]]
 name = "sophgo-hal"
 version = "0.0.0"
+dependencies = [
+ "base-address",
+ "uart16550",
+]
 
 [[package]]
 name = "sophgo-rom-rt"
 version = "0.0.0"
 dependencies = [
+ "base-address",
+ "sophgo-hal",
  "sophgo-rom-rt-macros",
 ]
 
@@ -172,7 +183,7 @@ dependencies = [
 
 [[package]]
 name = "sophgo-rom-tool"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "clap",
  "crc",
