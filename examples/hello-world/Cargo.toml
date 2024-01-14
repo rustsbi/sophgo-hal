@@ -9,3 +9,8 @@ edition = "2021"
 uart16550 = "0.0.1"
 sophgo-rom-rt = { version = "0.0.0", path = "../../sophgo-rom-rt" }
 panic-halt = "0.2.0"
+
+[[bin]]
+name = "hello-world"
+test = false
+bench = false
