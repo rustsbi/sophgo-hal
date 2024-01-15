@@ -7,8 +7,51 @@ use base_address::Static;
 
 /// Peripherals available on ROM start.
 pub struct Peripherals {
+    // TODO pub pin_mux: sophgo_hal::PinMux<Static<0x03001000>>,
+    /// General Purpose Input/Output 0.
+    pub gpio0: sophgo_hal::GPIO<Static<0x03020000>>,
+    /// General Purpose Input/Output 1.
+    pub gpio1: sophgo_hal::GPIO<Static<0x03021000>>,
+    /// General Purpose Input/Output 2.
+    pub gpio2: sophgo_hal::GPIO<Static<0x03022000>>,
+    /// General Purpose Input/Output 3.
+    pub gpio3: sophgo_hal::GPIO<Static<0x03023000>>,
+
+    // TODO pub pwm0: sophgo_hal::PWM<Static<0x03060000>>,
+    // TODO pub pwm1: sophgo_hal::PWM<Static<0x03061000>>,
+    // TODO pub pwm2: sophgo_hal::PWM<Static<0x03062000>>,
+    // TODO pub pwm3: sophgo_hal::PWM<Static<0x03063000>>,
+    // TODO pub timer: sophgo_hal::Timer<Static<0x030A0000>>,
+    // TODO pub i2c0: sophgo_hal::I2C<Static<0x04000000>>,
+    // TODO pub i2c1: sophgo_hal::I2C<Static<0x04010000>>,
+    // TODO pub i2c2: sophgo_hal::I2C<Static<0x04020000>>,
+    // TODO pub i2c3: sophgo_hal::I2C<Static<0x04030000>>,
+    // TODO pub i2c4: sophgo_hal::I2C<Static<0x04040000>>,
+    // TODO pub spi_nand: sophgo_hal::SPINand<Static<0x04060000>>,
+    // TODO pub i2s0: sophgo_hal::I2S<Static<0x04100000>>,
+    // TODO pub i2s1: sophgo_hal::I2S<Static<0x04110000>>,
+    // TODO pub i2s2: sophgo_hal::I2S<Static<0x04120000>>,
+    // TODO pub i2s3: sophgo_hal::I2S<Static<0x04130000>>,
     /// Universal Asynchronous Receiver/Transmitter 0.
     pub uart0: sophgo_hal::UART<Static<0x04140000>>,
+    /// Universal Asynchronous Receiver/Transmitter 1.
+    pub uart1: sophgo_hal::UART<Static<0x04150000>>,
+    /// Universal Asynchronous Receiver/Transmitter 2.
+    pub uart2: sophgo_hal::UART<Static<0x04160000>>,
+    /// Universal Asynchronous Receiver/Transmitter 3.
+    pub uart3: sophgo_hal::UART<Static<0x04170000>>,
+
+    // TODO spi0: sophgo_hal::SPI<Static<0x04180000>>,
+    // TODO spi1: sophgo_hal::SPI<Static<0x04190000>>,
+    // TODO spi2: sophgo_hal::SPI<Static<0x041A0000>>,
+    // TODO spi3: sophgo_hal::SPI<Static<0x041B0000>>,
+    /// Universal Asynchronous Receiver/Transmitter 4.
+    pub uart4: sophgo_hal::UART<Static<0x041C0000>>,
+    // TODO sd0: sophgo_hal::SD<Static<0x04310000>>,
+    // TODO sd1: sophgo_hal::SD<Static<0x04320000>>,
+    // TODO usb: sophgo_hal::USB<Static<0x04340000>>,
+    // TODO documents
+    pub rtc_gpio: sophgo_hal::GPIO<Static<0x05021000>>,
 }
 
 #[cfg(target_arch = "riscv64")]
