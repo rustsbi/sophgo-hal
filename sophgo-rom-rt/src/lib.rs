@@ -43,13 +43,35 @@ unsafe extern "C" fn entry() -> ! {
         ".word   0",
         ".word   0",
         ".word   0",
-        "1:  la      sp, {stack}
+        "1:",
+        // configure mxstatus register
+        // PM = 0b11 (Current privilege mode is Machine mode)
+        // THEADISAEE = 1 (Enable T-Head ISA)
+        // MAEE = 1 (Enable extended MMU attributes)
+        // MHRD = 0 (Disable TLB hardware refill)
+        // CLINTEE = 1 (CLINT usoft and utimer can be responded)
+        // UCME = 1 (Enable extended cache instructions on U-mode)
+        // MM = 1 (Enable hardware unaligned memory access)
+        // PMP4K = 0 (read-only, PMP granularity 4KiB)
+        // PMDM = 0 (allow performance counter on M-mode)
+        // PMDS = 0 (allow performance counter on S-mode)
+        // PMDU = 0 (allow performance counter on U-mode)
+        "   li      t0, 0xc0638000
+            csrw    0x7c0, t0",
+        // invalid I-cache, D-cache, BHT and BTB by writing mcor register
+        "   li      t2, 0x30013
+            csrw    0x7c2, t2",
+        // enable I-cache, D-cache by mhcr register
+        "   csrsi   0x7c1, 0x3",
+        // load stack address
+        "   la      sp, {stack}
             li      t0, {hart_stack_size}
             add     sp, sp, t0",
+        // clear bss segment
         "	la  	t1, sbss
         	la   	t2, ebss
     	1:  bgeu 	t1, t2, 1f
-        	sd   	zero, 0(t1) 
+        	sd   	zero, 0(t1)
         	addi 	t1, t1, 8 
         	j    	1b
     	1:",
