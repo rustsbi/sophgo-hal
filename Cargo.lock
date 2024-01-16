@@ -63,6 +63,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "66e5a45018e1b85498d7bf240d0f1bad798aeb5a162b2b59c82e950f0ea3ccb3"
 
 [[package]]
+name = "blinky"
+version = "0.0.0"
+dependencies = [
+ "panic-halt",
+ "sophgo-rom-rt",
+]
+
+[[package]]
 name = "clap"
 version = "4.4.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"

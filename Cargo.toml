@@ -6,6 +6,7 @@ members = [
     "sophgo-rom-rt/macros",
     "sophgo-rom-tool",
     "examples/hello-world",
+    "examples/blinky",
 ]
 
 [workspace.package]
