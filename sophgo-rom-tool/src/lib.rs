@@ -1,34 +1,26 @@
 use core::mem::{size_of, size_of_val};
 use crc::{Crc, CRC_16_XMODEM};
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Error {
-    HeadLength {
-        wrong_length: usize,
-    },
-    MagicNumber {
-        wrong_magic: u32,
-    },
-    RawBlobMagic {
-        wrong_magic: [u8; 32],
-    },
-    ImageContentLength {
-        wrong_content_length: usize,
-        wrong_full_length: usize,
-    },
-    OutputBufferLength {
-        wrong_length: usize,
-    },
+    HeadLength { wrong_length: usize },
+    MagicNumber { wrong_magic: u32 },
+    RawBlobMagic { wrong_magic: [u8; 32] },
+    ImageFullLength { wrong_full_length: usize },
+    ImageContentLength { wrong_content_length: usize },
+    OutputBufferLength { wrong_length: usize },
 }
 
 pub type Result<T> = core::result::Result<T, Error>;
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Operations<'a> {
     pub refill_header: Option<HeaderInfo>,
     pub set_image_content: Option<&'a [u8]>,
     pub resize_image_full_length: usize,
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HeaderInfo {
     pub blcp_image_checksum: u32,
     pub bl2_image_checksum: u32,
@@ -124,15 +116,19 @@ pub fn process(buf: &mut [u8], ops: &Operations) -> Result<()> {
         let param_checksum = 0xCAFE0000u32 + crc.checksum(&buf[0x10..0x800]) as u32;
         buf[0xC..0x10].copy_from_slice(&param_checksum.to_le_bytes())
     }
+    if ops.resize_image_full_length > u32::MAX as usize
+        || ops.resize_image_full_length < HEADER_LENGTH
+    {
+        return Err(Error::ImageFullLength {
+            wrong_full_length: ops.resize_image_full_length,
+        });
+    }
     if let Some(image) = &ops.set_image_content {
         if image.len() > u32::MAX as usize
-            || ops.resize_image_full_length > u32::MAX as usize
-            || ops.resize_image_full_length < HEADER_LENGTH
             || image.len() + HEADER_LENGTH > ops.resize_image_full_length
         {
             return Err(Error::ImageContentLength {
                 wrong_content_length: image.len(),
-                wrong_full_length: ops.resize_image_full_length,
             });
         }
         buf[HEADER_LENGTH..][..image.len()].copy_from_slice(image);
