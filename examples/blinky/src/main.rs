@@ -4,30 +4,19 @@
 #![no_std]
 #![no_main]
 
-use core::arch::asm;
-
+use embedded_hal::digital::OutputPin;
 use panic_halt as _;
 use sophgo_rom_rt::{entry, Peripherals};
 
 #[entry]
 fn main(p: Peripherals) -> ! {
-    unsafe {
-        p.rtc_gpio
-            .direction
-            .write(p.rtc_gpio.direction.read().set_output(2));
-    }
+    let pad_led = p.pwr_pads.gpio2.into_function(&p.pinmux);
+    let mut led = p.pwr_gpio.a2.into_pull_up_output(pad_led);
+
     loop {
-        unsafe {
-            p.rtc_gpio.data.write(p.rtc_gpio.data.read() | (1 << 2));
-        }
-        for _ in 0..=1_000_000 {
-            unsafe { asm!("nop") };
-        }
-        unsafe {
-            p.rtc_gpio.data.write(p.rtc_gpio.data.read() & !(1 << 2));
-        }
-        for _ in 0..=1_000_000 {
-            unsafe { asm!("nop") };
-        }
+        led.set_high().unwrap();
+        riscv::asm::delay(10_000_000);
+        led.set_low().unwrap();
+        riscv::asm::delay(10_000_000);
     }
 }

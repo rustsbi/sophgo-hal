@@ -3,11 +3,16 @@
 
 pub use sophgo_rom_rt_macros::entry;
 
-use base_address::Static;
+use base_address::{BaseAddress, Static};
+use sophgo_hal::{
+    gpio::{Gpio, Input},
+    pad::{Floating, GpioFunc, Pad},
+};
 
 /// Peripherals available on ROM start.
 pub struct Peripherals {
-    // TODO pub pin_mux: sophgo_hal::PinMux<Static<0x03001000>>,
+    pub pinmux: sophgo_hal::PINMUX<Static<0x03001000>>,
+    // TODO pub pads: sophgo_hal::gpio::Pads<Static<xxxx>>,
     /// General Purpose Input/Output 0.
     pub gpio0: sophgo_hal::GPIO<Static<0x03020000>>,
     /// General Purpose Input/Output 1.
@@ -51,7 +56,36 @@ pub struct Peripherals {
     // TODO sd1: sophgo_hal::SD<Static<0x04320000>>,
     // TODO usb: sophgo_hal::USB<Static<0x04340000>>,
     // TODO documents
-    pub rtc_gpio: sophgo_hal::GPIO<Static<0x05021000>>,
+    pub pwr_gpio: GpioPort<Static<0x05021000>>,
+    pub pwr_pads: PwrPads<Static<0x05027000>>,
+}
+
+pub struct GpioPort<A: BaseAddress> {
+    pub a0: Gpio<A, 0, Input>,
+    pub a1: Gpio<A, 1, Input>,
+    pub a2: Gpio<A, 2, Input>,
+    // TODO a3 to a31
+    base: A,
+}
+
+impl<A: BaseAddress> core::ops::Deref for GpioPort<A> {
+    type Target = sophgo_hal::gpio::RegisterBlock;
+
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        unsafe { &*(self.base.ptr() as *const _) }
+    }
+}
+
+pub struct Pads<A: BaseAddress> {
+    pub sd0_clk: Pad<A, 6, ()>, // TODO sd0_clk default function
+                                // TODO ...
+}
+
+pub struct PwrPads<A: BaseAddress> {
+    pub gpio1: Pad<A, 48, GpioFunc<Floating>>,
+    pub gpio2: Pad<A, 49, GpioFunc<Floating>>,
+    // TODO ...
 }
 
 #[cfg(target_arch = "riscv64")]
