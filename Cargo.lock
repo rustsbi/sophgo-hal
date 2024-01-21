@@ -66,7 +66,10 @@ checksum = "66e5a45018e1b85498d7bf240d0f1bad798aeb5a162b2b59c82e950f0ea3ccb3"
 name = "blinky"
 version = "0.0.0"
 dependencies = [
+ "embedded-hal",
  "panic-halt",
+ "riscv",
+ "sophgo-hal",
  "sophgo-rom-rt",
 ]
 
@@ -132,6 +135,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "19d374276b40fb8bbdee95aef7c7fa6b5316ec764510eb64b8dd0e2ed0d7e7f5"
 
 [[package]]
+name = "critical-section"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7059fff8937831a9ae6f0fe4d658ffabf58f2ca96aa9dec1c889f936f705f216"
+
+[[package]]
+name = "embedded-hal"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
+
+[[package]]
 name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -179,10 +194,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "riscv"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "575e01d1b3282801143c2a09e5ddddb0be7fc9bec2f1d624b789c9e9559a0023"
+dependencies = [
+ "critical-section",
+ "embedded-hal",
+]
+
+[[package]]
 name = "sophgo-hal"
 version = "0.0.0"
 dependencies = [
  "base-address",
+ "embedded-hal",
  "memoffset",
  "uart16550",
  "volatile-register",

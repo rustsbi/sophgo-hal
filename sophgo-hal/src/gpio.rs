@@ -1,5 +1,12 @@
 //! General Purpose Input/Output.
 
+use crate::{
+    pad::{GpioFunc, Pad, PullUp},
+    GPIO,
+};
+use base_address::BaseAddress;
+use core::marker::PhantomData;
+use embedded_hal::digital::{ErrorType, OutputPin};
 use volatile_register::{RO, RW, WO};
 
 /// GPIO registers.
@@ -33,7 +40,7 @@ pub struct RegisterBlock {
     pub sync_level: RW<u32>,
 }
 
-/// GPIO direction.
+/// GPIO direction register.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
 pub struct Direction(u32);
@@ -58,6 +65,95 @@ impl Direction {
     #[inline]
     pub fn is_output(self, n: u8) -> bool {
         self.0 & (1 << n) != 0
+    }
+}
+
+/// Owned GPIO peripheral signal with mode type state.
+pub struct Gpio<A: BaseAddress, const I: u8, M> {
+    base: GPIO<A>,
+    _mode: PhantomData<M>,
+}
+
+/// Input mode (type state).
+pub struct Input;
+
+/// Output mode (type state).
+pub struct Output;
+
+impl<A: BaseAddress, const I: u8, M> Gpio<A, I, M> {
+    /// Configures the GPIO signal as a `GpioPad` operating as a pull up output.
+    ///
+    /// # Examples
+    ///
+    /// Gets ownership of pad from `PwrPads`, configures it as a pull up output
+    /// to drive an LED.
+    ///
+    /// ```no_run
+    /// let pad_led = p.pwr_pads.gpio2.into_function(&p.pinmux);
+    /// let mut led = p.pwr_gpio.a2.into_pull_up_output(pad_led);
+    /// ```
+    #[inline]
+    pub fn into_pull_up_output<A2: BaseAddress, const N: usize>(
+        self,
+        pad: Pad<A2, N, GpioFunc<PullUp>>,
+    ) -> GpioPad<Gpio<A, I, Output>, Pad<A2, N, GpioFunc<PullUp>>> {
+        unsafe {
+            self.base.direction.modify(|w| w.set_output(I));
+        }
+        GpioPad {
+            gpio: Gpio {
+                base: self.base,
+                _mode: PhantomData,
+            },
+            pad,
+        }
+    }
+}
+
+/// Ownership wrapper of a GPIO signal and a pad.
+pub struct GpioPad<T, U> {
+    gpio: T,
+    pad: U,
+}
+
+impl<A: BaseAddress, A2: BaseAddress, const I: u8, const N: usize, M, T>
+    GpioPad<Gpio<A, I, M>, Pad<A2, N, GpioFunc<T>>>
+{
+    /// Reconfigures the `GpioPad` to operate as a pull up output.
+    #[inline]
+    pub fn into_pull_up_output(self) -> GpioPad<Gpio<A, I, Output>, Pad<A2, N, GpioFunc<PullUp>>> {
+        let (gpio, pad) = self.into_inner();
+        gpio.into_pull_up_output(pad.into_gpio_pull_up())
+    }
+}
+
+impl<T, U> GpioPad<T, U> {
+    /// Unwraps the ownership structure, returning the GPIO signal and the pad.
+    #[inline]
+    pub fn into_inner(self) -> (T, U) {
+        (self.gpio, self.pad)
+    }
+}
+
+impl<T, U> ErrorType for GpioPad<T, U> {
+    type Error = core::convert::Infallible;
+}
+
+impl<A: BaseAddress, const I: u8, U> OutputPin for GpioPad<Gpio<A, I, Output>, U> {
+    #[inline]
+    fn set_low(&mut self) -> Result<(), Self::Error> {
+        unsafe {
+            self.gpio.base.data.modify(|w| w & !(1 << I));
+        }
+        Ok(())
+    }
+
+    #[inline]
+    fn set_high(&mut self) -> Result<(), Self::Error> {
+        unsafe {
+            self.gpio.base.data.modify(|w| w | (1 << I));
+        }
+        Ok(())
     }
 }
 

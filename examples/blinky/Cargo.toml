@@ -10,7 +10,10 @@ repository.workspace = true
 
 [dependencies]
 sophgo-rom-rt = { version = "0.0.0", path = "../../sophgo-rom-rt" }
+sophgo-hal = { version = "0.0.0", path = "../../sophgo-hal" }
 panic-halt = "0.2.0"
+riscv = "0.11.0"
+embedded-hal = "1.0.0"
 
 [[bin]]
 name = "blinky"
