@@ -147,6 +147,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "361a90feb7004eca4019fb28352a9465666b24f840f5c3cddf0ff13920590b89"
 
 [[package]]
+name = "embedded-io"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
+
+[[package]]
 name = "heck"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -156,7 +162,10 @@ checksum = "95505c38b4572b2d910cecb0281560f54b440a19336cbbcb27bf6ce6adc6f5a8"
 name = "hello-world"
 version = "0.0.0"
 dependencies = [
+ "embedded-hal",
+ "embedded-io",
  "panic-halt",
+ "riscv",
  "sophgo-rom-rt",
 ]
 
@@ -209,8 +218,8 @@ version = "0.0.0"
 dependencies = [
  "base-address",
  "embedded-hal",
+ "embedded-io",
  "memoffset",
- "uart16550",
  "volatile-register",
 ]
 
@@ -256,12 +265,6 @@ dependencies = [
  "quote",
  "unicode-ident",
 ]
-
-[[package]]
-name = "uart16550"
-version = "0.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "939f6f9ccad815fe3efca8fd06f2ec1620c0387fb1bca2b231b61ce710bffb9b"
 
 [[package]]
 name = "unicode-ident"

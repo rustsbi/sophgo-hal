@@ -88,7 +88,7 @@ impl<A: BaseAddress, const I: u8, M> Gpio<A, I, M> {
     /// Gets ownership of pad from `PwrPads`, configures it as a pull up output
     /// to drive an LED.
     ///
-    /// ```no_run
+    /// ```ignore
     /// let pad_led = p.pwr_pads.gpio2.into_function(&p.pinmux);
     /// let mut led = p.pwr_gpio.a2.into_pull_up_output(pad_led);
     /// ```

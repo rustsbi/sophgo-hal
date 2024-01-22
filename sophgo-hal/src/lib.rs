@@ -2,18 +2,19 @@
 
 pub mod gpio;
 pub mod pad;
+pub mod uart;
 
 use core::ops;
 
 use base_address::BaseAddress;
 
 /// Universal Asynchronous Receiver/Transmitter.
-pub struct UART<A: BaseAddress> {
+pub struct UART<A: BaseAddress, const I: usize> {
     base: A,
 }
 
-impl<A: BaseAddress> ops::Deref for UART<A> {
-    type Target = uart16550::Uart16550<u32>;
+impl<A: BaseAddress, const I: usize> ops::Deref for UART<A, I> {
+    type Target = uart::RegisterBlock;
 
     #[inline(always)]
     fn deref(&self) -> &Self::Target {

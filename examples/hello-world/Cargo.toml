@@ -11,6 +11,9 @@ repository.workspace = true
 [dependencies]
 sophgo-rom-rt = { version = "0.0.0", path = "../../sophgo-rom-rt" }
 panic-halt = "0.2.0"
+riscv = "0.11.0"
+embedded-io = "0.6.1"
+embedded-hal = "1.0.0"
 
 [[bin]]
 name = "hello-world"
