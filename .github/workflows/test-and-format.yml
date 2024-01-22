@@ -1,0 +1,35 @@
+name: Test and Format
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+jobs:  
+  fmt:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt
+      - name: Cache Dependencies
+        uses: Swatinem/rust-cache@v2
+      - name: Rustfmt Check
+        uses: actions-rust-lang/rustfmt@v1
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly
+      - uses: Swatinem/rust-cache@v2
+      - name: Run tests
+        run: |
+          cargo test --workspace --exclude sophgo-rom-rt
