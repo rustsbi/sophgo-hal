@@ -5,6 +5,7 @@ use core::marker::PhantomData;
 use volatile_register::RW;
 
 /// The `PINMUX` pad multiplexer peripheral.
+#[repr(C)]
 pub struct PinMux {
     /// Pad function multiplexer registers for all the pads.
     pub fmux: FMux,
@@ -21,11 +22,23 @@ impl AsRef<FMux> for PinMux {
 }
 
 /// Pad function multiplexer registers for all the pads.
+#[repr(C)]
 pub struct FMux {
-    _reserved0: [u8; 0xAC],
+    _reserved0: [u8; 0x40],
+    /// UART-0 TX pad function.
+    pub uart0_tx: RW<u32>,
+    /// UART-0 RX pad function.
+    pub uart0_rx: RW<u32>,
+    _reserved1: [u8; 0x28],
+    /// I2C-0 Serial Clock (SCL) pad function.
+    pub i2c0_scl: RW<u32>,
+    /// I2C-0 Serial Data (SDA) pad function.
+    pub i2c0_sda: RW<u32>,
+    _reserved2: [u8; 0x34],
     /// Power (RTC) domain GPIO-2 pad function.
     pub pwr_gpio2: RW<u32>,
     // TODO other fields and padding
+    _reserved3: [u8; 0x1750],
 }
 
 impl FMux {
@@ -33,6 +46,10 @@ impl FMux {
     #[inline]
     pub fn fmux<const N: usize>(&self) -> &RW<u32> {
         match N {
+            18 => &self.uart0_tx,
+            19 => &self.uart0_rx,
+            28 => &self.i2c0_scl,
+            29 => &self.i2c0_sda,
             49 => &self.pwr_gpio2,
             _ => todo!(),
         }
@@ -40,13 +57,39 @@ impl FMux {
 }
 
 /// Non-RTC domain pad configurations.
+#[repr(C)]
 pub struct PadConfigs {
-    // TODO
+    _reserved0: [u8; 0x10C],
+    /// Non-RTC domain UART-0 TX pad configurations.
+    pub uart0_tx: RW<PadConfig>,
+    /// Non-RTC domain UART-0 RX pad configurations.
+    pub uart0_rx: RW<PadConfig>,
+    _reserved1: [u8; 0x28],
+    /// Non-RTC domain i2c-0 SCL pad configurations.
+    pub i2c0_scl: RW<PadConfig>,
+    /// Non-RTC domain i2c-0 SDA pad configurations.
+    pub i2c0_sda: RW<PadConfig>,
 }
 
-// TODO fn pad_config in impl PadConfigs
+impl PadConfigs {
+    /// Gets the pad configuration register for the given pad number `N`.
+    ///
+    /// `N` must be number of a pad in the non-RTC domain.
+    #[inline]
+    const fn pad_config<const N: usize>(&self) -> &RW<PadConfig> {
+        match N {
+            18 => &self.uart0_tx,
+            19 => &self.uart0_rx,
+            28 => &self.i2c0_scl,
+            29 => &self.i2c0_sda,
+            // if not a non-RTC pad, return unimplemented!()
+            _ => todo!(),
+        }
+    }
+}
 
 /// Power (RTC) domain pad configurations.
+#[repr(C)]
 pub struct PwrPadConfigs {
     _reserved0: [u8; 0x34],
     /// Power (RTC) domain GPIO-2 pad configuration.
@@ -138,11 +181,14 @@ impl<A: BaseAddress, const N: usize, F> Pad<A, N, F> {
         }
     }
     #[inline]
-    fn pad_config(&self) -> &RW<PadConfig> {
+    pub fn pad_config(&self) -> &RW<PadConfig> {
         match N {
             // TODO in range of power pads ...
             49 => unsafe { &*(self.base.ptr() as *const PwrPadConfigs) }.pad_config::<N>(),
             // TODO in range of conventional pads ...
+            18..=19 | 28..=29 => {
+                unsafe { &*(self.base.ptr() as *const PadConfigs) }.pad_config::<N>()
+            }
             // .. => { ... }
             _ => todo!(),
         }
@@ -173,6 +219,9 @@ pub struct PullUp;
 
 /// Floating as pull mode (type state).
 pub struct Floating;
+
+/// UART function (type state).
+pub struct UartFunc<const I: usize>;
 
 /// Trait for all valid pad functions.
 pub trait Function {
@@ -214,6 +263,32 @@ const fn gpio_fmux<const N: usize>() -> u32 {
     }
 }
 
+impl<const I: usize> Function for UartFunc<I> {
+    const PULL: Pull = Pull::Up;
+    #[inline]
+    fn fmux<const N: usize>() -> u32 {
+        uart_fmux::<N, I>()
+    }
+}
+
+const fn uart_fmux<const N: usize, const I: usize>() -> u32 {
+    match I {
+        0 => match N {
+            18..=19 => 0,
+            _ => unimplemented!(),
+        },
+        1 => match N {
+            28..=29 => 1,
+            _ => unimplemented!(),
+        },
+        2 => match N {
+            28..=29 => 2,
+            _ => unimplemented!(),
+        },
+        _ => unimplemented!(),
+    }
+}
+
 /// Pad internal pull direction values.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
@@ -224,4 +299,33 @@ pub enum Pull {
     Up = 1,
     /// Internally pulled down.
     Down = 2,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{FMux, PadConfigs, PinMux};
+    use memoffset::offset_of;
+
+    #[test]
+    fn struct_pinmux_offset() {
+        assert_eq!(offset_of!(PinMux, fmux), 0x00);
+        assert_eq!(offset_of!(PinMux, config), 0x1800);
+    }
+
+    #[test]
+    fn struct_fmux_offset() {
+        assert_eq!(offset_of!(FMux, uart0_tx), 0x40);
+        assert_eq!(offset_of!(FMux, uart0_rx), 0x44);
+        assert_eq!(offset_of!(FMux, i2c0_scl), 0x70);
+        assert_eq!(offset_of!(FMux, i2c0_sda), 0x74);
+        assert_eq!(offset_of!(FMux, pwr_gpio2), 0xAC);
+    }
+
+    #[test]
+    fn struct_pad_configs_offset() {
+        assert_eq!(offset_of!(PadConfigs, uart0_tx), 0x190C - 0x1800);
+        assert_eq!(offset_of!(PadConfigs, uart0_rx), 0x1910 - 0x1800);
+        assert_eq!(offset_of!(PadConfigs, i2c0_scl), 0x193C - 0x1800);
+        assert_eq!(offset_of!(PadConfigs, i2c0_sda), 0x1940 - 0x1800);
+    }
 }

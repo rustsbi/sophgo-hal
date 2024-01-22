@@ -6,7 +6,7 @@ pub use sophgo_rom_rt_macros::entry;
 use base_address::{BaseAddress, Static};
 use sophgo_hal::{
     gpio::{Gpio, Input},
-    pad::{Floating, GpioFunc, Pad},
+    pad::{Floating, GpioFunc, Pad, UartFunc},
 };
 
 /// Peripherals available on ROM start.
@@ -38,24 +38,25 @@ pub struct Peripherals {
     // TODO pub i2s2: sophgo_hal::I2S<Static<0x04120000>>,
     // TODO pub i2s3: sophgo_hal::I2S<Static<0x04130000>>,
     /// Universal Asynchronous Receiver/Transmitter 0.
-    pub uart0: sophgo_hal::UART<Static<0x04140000>>,
+    pub uart0: sophgo_hal::UART<Static<0x04140000>, 0>,
     /// Universal Asynchronous Receiver/Transmitter 1.
-    pub uart1: sophgo_hal::UART<Static<0x04150000>>,
+    pub uart1: sophgo_hal::UART<Static<0x04150000>, 1>,
     /// Universal Asynchronous Receiver/Transmitter 2.
-    pub uart2: sophgo_hal::UART<Static<0x04160000>>,
+    pub uart2: sophgo_hal::UART<Static<0x04160000>, 2>,
     /// Universal Asynchronous Receiver/Transmitter 3.
-    pub uart3: sophgo_hal::UART<Static<0x04170000>>,
+    pub uart3: sophgo_hal::UART<Static<0x04170000>, 3>,
 
     // TODO spi0: sophgo_hal::SPI<Static<0x04180000>>,
     // TODO spi1: sophgo_hal::SPI<Static<0x04190000>>,
     // TODO spi2: sophgo_hal::SPI<Static<0x041A0000>>,
     // TODO spi3: sophgo_hal::SPI<Static<0x041B0000>>,
     /// Universal Asynchronous Receiver/Transmitter 4.
-    pub uart4: sophgo_hal::UART<Static<0x041C0000>>,
+    pub uart4: sophgo_hal::UART<Static<0x041C0000>, 4>,
     // TODO sd0: sophgo_hal::SD<Static<0x04310000>>,
     // TODO sd1: sophgo_hal::SD<Static<0x04320000>>,
     // TODO usb: sophgo_hal::USB<Static<0x04340000>>,
     // TODO documents
+    pub pads: Pads<Static<0x03001800>>,
     pub pwr_gpio: GpioPort<Static<0x05021000>>,
     pub pwr_pads: PwrPads<Static<0x05027000>>,
 }
@@ -79,7 +80,11 @@ impl<A: BaseAddress> core::ops::Deref for GpioPort<A> {
 
 pub struct Pads<A: BaseAddress> {
     pub sd0_clk: Pad<A, 6, ()>, // TODO sd0_clk default function
-                                // TODO ...
+    pub uart0_tx: Pad<A, 18, UartFunc<0>>,
+    pub uart0_rx: Pad<A, 19, UartFunc<0>>,
+    pub i2c0_scl: Pad<A, 28, ()>,
+    pub i2c0_sda: Pad<A, 29, ()>,
+    // TODO ...
 }
 
 pub struct PwrPads<A: BaseAddress> {
