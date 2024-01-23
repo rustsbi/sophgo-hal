@@ -14,8 +14,3 @@ panic-halt = "0.2.0"
 riscv = "0.11.0"
 embedded-io = "0.6.1"
 embedded-hal = "1.0.0"
-
-[[bin]]
-name = "hello-world"
-test = false
-bench = false

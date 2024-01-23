@@ -32,4 +32,4 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - name: Run tests
         run: |
-          cargo test --workspace --exclude sophgo-rom-rt
+          cargo test --workspace --exclude sophgo-rom-rt --exclude blinky --exclude hello-world

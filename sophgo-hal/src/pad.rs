@@ -181,7 +181,7 @@ impl<A: BaseAddress, const N: usize, F> Pad<A, N, F> {
         }
     }
     #[inline]
-    pub fn pad_config(&self) -> &RW<PadConfig> {
+    fn pad_config(&self) -> &RW<PadConfig> {
         match N {
             // TODO in range of power pads ...
             49 => unsafe { &*(self.base.ptr() as *const PwrPadConfigs) }.pad_config::<N>(),
