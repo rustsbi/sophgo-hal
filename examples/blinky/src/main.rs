@@ -1,6 +1,3 @@
-// rustup target install riscv64imac-unknown-none-elf
-// cargo build -p blinky --target riscv64imac-unknown-none-elf --release
-
 #![no_std]
 #![no_main]
 

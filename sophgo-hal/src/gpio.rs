@@ -1,10 +1,6 @@
 //! General Purpose Input/Output.
 
-use crate::{
-    pad::{GpioFunc, Pad, PullUp},
-    GPIO,
-};
-use base_address::BaseAddress;
+use crate::pad::{self, GpioFunc, Pad, PullUp};
 use core::marker::PhantomData;
 use embedded_hal::digital::{ErrorType, OutputPin};
 use volatile_register::{RO, RW, WO};
@@ -69,8 +65,8 @@ impl Direction {
 }
 
 /// Owned GPIO peripheral signal with mode type state.
-pub struct Gpio<A: BaseAddress, const I: u8, M> {
-    base: GPIO<A>,
+pub struct Gpio<T, const I: u8, M> {
+    inner: T,
     _mode: PhantomData<M>,
 }
 
@@ -80,7 +76,7 @@ pub struct Input;
 /// Output mode (type state).
 pub struct Output;
 
-impl<A: BaseAddress, const I: u8, M> Gpio<A, I, M> {
+impl<T: AsRef<RegisterBlock>, const I: u8, M> Gpio<T, I, M> {
     /// Configures the GPIO signal as a `GpioPad` operating as a pull up output.
     ///
     /// # Examples
@@ -93,16 +89,16 @@ impl<A: BaseAddress, const I: u8, M> Gpio<A, I, M> {
     /// let mut led = p.pwr_gpio.a2.into_pull_up_output(pad_led);
     /// ```
     #[inline]
-    pub fn into_pull_up_output<A2: BaseAddress, const N: usize>(
+    pub fn into_pull_up_output<U, const N: usize>(
         self,
-        pad: Pad<A2, N, GpioFunc<PullUp>>,
-    ) -> GpioPad<Gpio<A, I, Output>, Pad<A2, N, GpioFunc<PullUp>>> {
+        pad: Pad<U, N, GpioFunc<PullUp>>,
+    ) -> GpioPad<Gpio<T, I, Output>, Pad<U, N, GpioFunc<PullUp>>> {
         unsafe {
-            self.base.direction.modify(|w| w.set_output(I));
+            self.inner.as_ref().direction.modify(|w| w.set_output(I));
         }
         GpioPad {
             gpio: Gpio {
-                base: self.base,
+                inner: self.inner,
                 _mode: PhantomData,
             },
             pad,
@@ -116,12 +112,12 @@ pub struct GpioPad<T, U> {
     pad: U,
 }
 
-impl<A: BaseAddress, A2: BaseAddress, const I: u8, const N: usize, M, T>
-    GpioPad<Gpio<A, I, M>, Pad<A2, N, GpioFunc<T>>>
+impl<T: AsRef<RegisterBlock>, U: AsRef<pad::PadConfigs>, const I: u8, const N: usize, M>
+    GpioPad<Gpio<T, I, M>, Pad<U, N, GpioFunc<T>>>
 {
     /// Reconfigures the `GpioPad` to operate as a pull up output.
     #[inline]
-    pub fn into_pull_up_output(self) -> GpioPad<Gpio<A, I, Output>, Pad<A2, N, GpioFunc<PullUp>>> {
+    pub fn into_pull_up_output(self) -> GpioPad<Gpio<T, I, Output>, Pad<U, N, GpioFunc<PullUp>>> {
         let (gpio, pad) = self.into_inner();
         gpio.into_pull_up_output(pad.into_gpio_pull_up())
     }
@@ -139,11 +135,11 @@ impl<T, U> ErrorType for GpioPad<T, U> {
     type Error = core::convert::Infallible;
 }
 
-impl<A: BaseAddress, const I: u8, U> OutputPin for GpioPad<Gpio<A, I, Output>, U> {
+impl<T: AsRef<RegisterBlock>, const I: u8, U> OutputPin for GpioPad<Gpio<T, I, Output>, U> {
     #[inline]
     fn set_low(&mut self) -> Result<(), Self::Error> {
         unsafe {
-            self.gpio.base.data.modify(|w| w & !(1 << I));
+            self.gpio.inner.as_ref().data.modify(|w| w & !(1 << I));
         }
         Ok(())
     }
@@ -151,7 +147,7 @@ impl<A: BaseAddress, const I: u8, U> OutputPin for GpioPad<Gpio<A, I, Output>, U
     #[inline]
     fn set_high(&mut self) -> Result<(), Self::Error> {
         unsafe {
-            self.gpio.base.data.modify(|w| w | (1 << I));
+            self.gpio.inner.as_ref().data.modify(|w| w | (1 << I));
         }
         Ok(())
     }

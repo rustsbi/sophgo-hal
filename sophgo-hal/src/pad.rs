@@ -1,6 +1,5 @@
 //! Silicon pad multiplexer and configurations.
 
-use base_address::BaseAddress;
 use core::marker::PhantomData;
 use volatile_register::RW;
 
@@ -164,19 +163,19 @@ impl PadConfig {
 }
 
 /// Ownership of a pad with function type state.
-pub struct Pad<A: BaseAddress, const N: usize, F> {
-    base: A,
+pub struct Pad<T, const N: usize, F> {
+    inner: T,
     _function: PhantomData<F>,
 }
 
-impl<A: BaseAddress, const N: usize, F> Pad<A, N, F> {
+impl<T: AsRef<PadConfigs>, const N: usize, F> Pad<T, N, F> {
     /// Converts the function of this pad.
     #[inline]
-    pub fn into_function<F2: Function>(self, fmux: impl AsRef<FMux>) -> Pad<A, N, F2> {
+    pub fn into_function<F2: Function>(self, fmux: impl AsRef<FMux>) -> Pad<T, N, F2> {
         unsafe { fmux.as_ref().fmux::<N>().write(F2::fmux::<N>()) };
         unsafe { self.pad_config().modify(|w| w.set_pull(F2::PULL)) };
         Pad {
-            base: self.base,
+            inner: self.inner,
             _function: PhantomData,
         }
     }
@@ -184,23 +183,22 @@ impl<A: BaseAddress, const N: usize, F> Pad<A, N, F> {
     fn pad_config(&self) -> &RW<PadConfig> {
         match N {
             // TODO in range of power pads ...
-            49 => unsafe { &*(self.base.ptr() as *const PwrPadConfigs) }.pad_config::<N>(),
+            49 => unsafe { &*(self.inner.as_ref() as *const _ as *const PwrPadConfigs) }
+                .pad_config::<N>(),
             // TODO in range of conventional pads ...
-            18..=19 | 28..=29 => {
-                unsafe { &*(self.base.ptr() as *const PadConfigs) }.pad_config::<N>()
-            }
+            18..=19 | 28..=29 => self.inner.as_ref().pad_config::<N>(),
             // .. => { ... }
             _ => todo!(),
         }
     }
 }
 
-impl<A: BaseAddress, const N: usize, T> Pad<A, N, GpioFunc<T>> {
+impl<T: AsRef<PadConfigs>, const N: usize, F> Pad<T, N, GpioFunc<F>> {
     #[inline]
-    pub(crate) fn into_gpio_pull_up(self) -> Pad<A, N, GpioFunc<PullUp>> {
+    pub(crate) fn into_gpio_pull_up(self) -> Pad<T, N, GpioFunc<PullUp>> {
         unsafe { self.pad_config().modify(|w| w.set_pull(Pull::Up)) };
         Pad {
-            base: self.base,
+            inner: self.inner,
             _function: PhantomData,
         }
     }

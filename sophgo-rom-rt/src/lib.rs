@@ -3,24 +3,28 @@
 
 pub use sophgo_rom_rt_macros::entry;
 
-use base_address::{BaseAddress, Static};
+pub mod prelude {
+    pub use crate::{entry, Peripherals};
+    pub use sophgo_hal::prelude::*;
+}
+
 use sophgo_hal::{
     gpio::{Gpio, Input},
-    pad::{Floating, GpioFunc, Pad, UartFunc},
+    pad::{FMux, Floating, GpioFunc, Pad, PadConfigs, PinMux, PwrPadConfigs, UartFunc},
 };
 
 /// Peripherals available on ROM start.
 pub struct Peripherals {
-    pub pinmux: sophgo_hal::PINMUX<Static<0x03001000>>,
+    pub pinmux: PINMUX,
     // TODO pub pads: sophgo_hal::gpio::Pads<Static<xxxx>>,
     /// General Purpose Input/Output 0.
-    pub gpio0: sophgo_hal::GPIO<Static<0x03020000>>,
+    pub gpio0: GPIO0,
     /// General Purpose Input/Output 1.
-    pub gpio1: sophgo_hal::GPIO<Static<0x03021000>>,
+    pub gpio1: GPIO1,
     /// General Purpose Input/Output 2.
-    pub gpio2: sophgo_hal::GPIO<Static<0x03022000>>,
+    pub gpio2: GPIO2,
     /// General Purpose Input/Output 3.
-    pub gpio3: sophgo_hal::GPIO<Static<0x03023000>>,
+    pub gpio3: GPIO3,
 
     // TODO pub pwm0: sophgo_hal::PWM<Static<0x03060000>>,
     // TODO pub pwm1: sophgo_hal::PWM<Static<0x03061000>>,
@@ -38,60 +42,226 @@ pub struct Peripherals {
     // TODO pub i2s2: sophgo_hal::I2S<Static<0x04120000>>,
     // TODO pub i2s3: sophgo_hal::I2S<Static<0x04130000>>,
     /// Universal Asynchronous Receiver/Transmitter 0.
-    pub uart0: sophgo_hal::UART<Static<0x04140000>, 0>,
+    pub uart0: UART0,
     /// Universal Asynchronous Receiver/Transmitter 1.
-    pub uart1: sophgo_hal::UART<Static<0x04150000>, 1>,
+    pub uart1: UART1,
     /// Universal Asynchronous Receiver/Transmitter 2.
-    pub uart2: sophgo_hal::UART<Static<0x04160000>, 2>,
+    pub uart2: UART2,
     /// Universal Asynchronous Receiver/Transmitter 3.
-    pub uart3: sophgo_hal::UART<Static<0x04170000>, 3>,
+    pub uart3: UART3,
 
     // TODO spi0: sophgo_hal::SPI<Static<0x04180000>>,
     // TODO spi1: sophgo_hal::SPI<Static<0x04190000>>,
     // TODO spi2: sophgo_hal::SPI<Static<0x041A0000>>,
     // TODO spi3: sophgo_hal::SPI<Static<0x041B0000>>,
     /// Universal Asynchronous Receiver/Transmitter 4.
-    pub uart4: sophgo_hal::UART<Static<0x041C0000>, 4>,
+    pub uart4: UART4,
     // TODO sd0: sophgo_hal::SD<Static<0x04310000>>,
     // TODO sd1: sophgo_hal::SD<Static<0x04320000>>,
     // TODO usb: sophgo_hal::USB<Static<0x04340000>>,
     // TODO documents
-    pub pads: Pads<Static<0x03001800>>,
-    pub pwr_gpio: GpioPort<Static<0x05021000>>,
-    pub pwr_pads: PwrPads<Static<0x05027000>>,
+    pub pads: Pads<PINMUX>,
+    pub pwr_gpio: GpioPort<PWR_GPIO>,
+    pub pwr_pads: PwrPads<PWR_PINMUX>,
 }
 
-pub struct GpioPort<A: BaseAddress> {
-    pub a0: Gpio<A, 0, Input>,
-    pub a1: Gpio<A, 1, Input>,
-    pub a2: Gpio<A, 2, Input>,
-    // TODO a3 to a31
-    base: A,
+/// Pad function multiplexer peripheral.
+pub struct PINMUX {
+    _private: (),
 }
 
-impl<A: BaseAddress> core::ops::Deref for GpioPort<A> {
-    type Target = sophgo_hal::gpio::RegisterBlock;
-
+impl AsRef<PinMux> for PINMUX {
     #[inline(always)]
-    fn deref(&self) -> &Self::Target {
-        unsafe { &*(self.base.ptr() as *const _) }
+    fn as_ref(&self) -> &sophgo_hal::pad::PinMux {
+        unsafe { &*(0x03001000 as *const _) }
     }
 }
 
-pub struct Pads<A: BaseAddress> {
-    pub sd0_clk: Pad<A, 6, ()>, // TODO sd0_clk default function
-    pub uart0_tx: Pad<A, 18, UartFunc<0>>,
-    pub uart0_rx: Pad<A, 19, UartFunc<0>>,
-    pub i2c0_scl: Pad<A, 28, ()>,
-    pub i2c0_sda: Pad<A, 29, ()>,
+impl AsRef<FMux> for PINMUX {
+    #[inline(always)]
+    fn as_ref(&self) -> &FMux {
+        &<Self as AsRef<PinMux>>::as_ref(self).fmux
+    }
+}
+
+impl AsRef<PadConfigs> for PINMUX {
+    #[inline(always)]
+    fn as_ref(&self) -> &PadConfigs {
+        &<Self as AsRef<PinMux>>::as_ref(self).config
+    }
+}
+
+/// General Purpose Input/Output peripheral 0.
+pub struct GPIO0 {
+    _private: (),
+}
+
+impl AsRef<sophgo_hal::gpio::RegisterBlock> for GPIO0 {
+    #[inline(always)]
+    fn as_ref(&self) -> &sophgo_hal::gpio::RegisterBlock {
+        unsafe { &*(0x03020000 as *const _) }
+    }
+}
+
+/// General Purpose Input/Output peripheral 1.
+pub struct GPIO1 {
+    _private: (),
+}
+
+impl AsRef<sophgo_hal::gpio::RegisterBlock> for GPIO1 {
+    #[inline(always)]
+    fn as_ref(&self) -> &sophgo_hal::gpio::RegisterBlock {
+        unsafe { &*(0x03021000 as *const _) }
+    }
+}
+
+/// General Purpose Input/Output peripheral 2.
+pub struct GPIO2 {
+    _private: (),
+}
+
+impl AsRef<sophgo_hal::gpio::RegisterBlock> for GPIO2 {
+    #[inline(always)]
+    fn as_ref(&self) -> &sophgo_hal::gpio::RegisterBlock {
+        unsafe { &*(0x03022000 as *const _) }
+    }
+}
+
+/// General Purpose Input/Output peripheral 3.
+pub struct GPIO3 {
+    _private: (),
+}
+
+impl AsRef<sophgo_hal::gpio::RegisterBlock> for GPIO3 {
+    #[inline(always)]
+    fn as_ref(&self) -> &sophgo_hal::gpio::RegisterBlock {
+        unsafe { &*(0x03023000 as *const _) }
+    }
+}
+
+/// Low-power Domain General Purpose Input/Output peripheral.
+#[allow(non_camel_case_types)]
+pub struct PWR_GPIO {
+    _private: (),
+}
+
+impl AsRef<sophgo_hal::gpio::RegisterBlock> for PWR_GPIO {
+    #[inline(always)]
+    fn as_ref(&self) -> &sophgo_hal::gpio::RegisterBlock {
+        unsafe { &*(0x05021000 as *const _) }
+    }
+}
+
+pub struct GpioPort<T> {
+    pub a0: Gpio<T, 0, Input>,
+    pub a1: Gpio<T, 1, Input>,
+    pub a2: Gpio<T, 2, Input>,
+    // TODO a3 to a31
+}
+
+#[allow(non_camel_case_types)]
+pub struct PWR_PINMUX {
+    _private: (),
+}
+
+impl AsRef<PwrPadConfigs> for PWR_PINMUX {
+    #[inline(always)]
+    fn as_ref(&self) -> &PwrPadConfigs {
+        unsafe { &*(0x05027000 as *const _) }
+    }
+}
+
+impl AsRef<PadConfigs> for PWR_PINMUX {
+    #[inline(always)]
+    fn as_ref(&self) -> &PadConfigs {
+        unsafe { &*(0x05027000 as *const _) }
+    }
+}
+
+pub struct Pads<T> {
+    pub sd0_clk: Pad<T, 6, ()>, // TODO sd0_clk default function
+    pub uart0_tx: Pad<T, 18, UartFunc<0>>,
+    pub uart0_rx: Pad<T, 19, UartFunc<0>>,
+    pub i2c0_scl: Pad<T, 28, ()>,
+    pub i2c0_sda: Pad<T, 29, ()>,
     // TODO ...
 }
 
-pub struct PwrPads<A: BaseAddress> {
-    pub gpio1: Pad<A, 48, GpioFunc<Floating>>,
-    pub gpio2: Pad<A, 49, GpioFunc<Floating>>,
+pub struct PwrPads<T> {
+    pub gpio1: Pad<T, 48, GpioFunc<Floating>>,
+    pub gpio2: Pad<T, 49, GpioFunc<Floating>>,
     // TODO ...
 }
+
+/// Universal Asynchronous Receiver/Transmitter peripheral 0.
+pub struct UART0 {
+    _private: (),
+}
+
+impl AsRef<sophgo_hal::uart::RegisterBlock> for UART0 {
+    #[inline(always)]
+    fn as_ref(&self) -> &sophgo_hal::uart::RegisterBlock {
+        unsafe { &*(0x04140000 as *const _) }
+    }
+}
+
+impl sophgo_hal::uart::UartExt<0> for UART0 {}
+
+/// Universal Asynchronous Receiver/Transmitter peripheral 1.
+pub struct UART1 {
+    _private: (),
+}
+
+impl AsRef<sophgo_hal::uart::RegisterBlock> for UART1 {
+    #[inline(always)]
+    fn as_ref(&self) -> &sophgo_hal::uart::RegisterBlock {
+        unsafe { &*(0x04150000 as *const _) }
+    }
+}
+
+impl sophgo_hal::uart::UartExt<1> for UART1 {}
+
+/// Universal Asynchronous Receiver/Transmitter peripheral 2.
+pub struct UART2 {
+    _private: (),
+}
+
+impl AsRef<sophgo_hal::uart::RegisterBlock> for UART2 {
+    #[inline(always)]
+    fn as_ref(&self) -> &sophgo_hal::uart::RegisterBlock {
+        unsafe { &*(0x04160000 as *const _) }
+    }
+}
+
+impl sophgo_hal::uart::UartExt<2> for UART2 {}
+
+/// Universal Asynchronous Receiver/Transmitter peripheral 3.
+pub struct UART3 {
+    _private: (),
+}
+
+impl AsRef<sophgo_hal::uart::RegisterBlock> for UART3 {
+    #[inline(always)]
+    fn as_ref(&self) -> &sophgo_hal::uart::RegisterBlock {
+        unsafe { &*(0x04170000 as *const _) }
+    }
+}
+
+impl sophgo_hal::uart::UartExt<3> for UART3 {}
+
+/// Universal Asynchronous Receiver/Transmitter peripheral 3.
+pub struct UART4 {
+    _private: (),
+}
+
+impl AsRef<sophgo_hal::uart::RegisterBlock> for UART4 {
+    #[inline(always)]
+    fn as_ref(&self) -> &sophgo_hal::uart::RegisterBlock {
+        unsafe { &*(0x041C0000 as *const _) }
+    }
+}
+
+impl sophgo_hal::uart::UartExt<4> for UART4 {}
 
 #[cfg(target_arch = "riscv64")]
 use core::arch::asm;

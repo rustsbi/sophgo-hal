@@ -1,12 +1,9 @@
-// rustup target install riscv64imac-unknown-none-elf
-// cargo build -p hello-world --target riscv64imac-unknown-none-elf --release
-
 #![no_std]
 #![no_main]
 
 use embedded_io::Write;
 use panic_halt as _;
-use sophgo_rom_rt::{entry, Peripherals};
+use sophgo_rom_rt::prelude::*;
 
 #[entry]
 fn main(p: Peripherals) -> ! {

@@ -1,10 +1,6 @@
 //! Universal Asynchronous Receiver/Transmitter.
 
-use crate::{
-    pad::{Pad, UartFunc},
-    UART,
-};
-use base_address::BaseAddress;
+use crate::pad::{Pad, UartFunc};
 use volatile_register::{RO, RW, WO};
 
 /// Universal Asynchoronous Receiver/Transmitter registers.
@@ -201,37 +197,37 @@ impl LSR {
 }
 
 /// Managed serial peripheral.
-pub struct Serial<const I: usize, A: BaseAddress, PADS> {
-    uart: UART<A, I>,
+pub struct Serial<T, PADS> {
+    uart: T,
     pads: PADS,
 }
 
-impl<const I: usize, A: BaseAddress, PADS> Serial<I, A, PADS> {
+impl<T, PADS> Serial<T, PADS> {
     /// Release serial instance and return its peripheral and pads.
     #[inline]
-    pub fn free(self) -> (UART<A, I>, PADS) {
+    pub fn free(self) -> (T, PADS) {
         (self.uart, self.pads)
     }
 }
 
-impl<const I: usize, A: BaseAddress> UART<A, I> {
-    /// Creates a polling serial instance, without interrupt or DMA configurations.
+pub trait UartExt<const I: usize>: AsRef<RegisterBlock> + Sized {
     #[inline]
-    pub fn serial<PADS>(self, config: Config, pads: PADS) -> Serial<I, A, PADS>
+    fn serial<PADS>(self, config: Config, pads: PADS) -> Serial<Self, PADS>
     where
         PADS: Pads<I>,
     {
+        let uart = self.as_ref();
         // TODO clock source and baudrate
         let interval = 14;
         unsafe {
-            self.lcr.modify(|w| w.enable_divisor_latch_access());
-            self.lpdll.write(interval & 0xff);
-            self.lpdlh.write((interval >> 8) & 0xff);
-            self.lcr.modify(|w| w.disable_divisor_latch_access());
+            uart.lcr.modify(|w| w.enable_divisor_latch_access());
+            uart.lpdll.write(interval & 0xff);
+            uart.lpdlh.write((interval >> 8) & 0xff);
+            uart.lcr.modify(|w| w.disable_divisor_latch_access());
         }
 
         unsafe {
-            self.lcr.modify(|w| {
+            uart.lcr.modify(|w| {
                 w.set_stop_bit(config.stop_bits)
                     .set_word_length(config.word_length)
                     .set_parity(config.parity)
@@ -249,33 +245,35 @@ impl embedded_io::Error for Error {
     }
 }
 
-impl<const I: usize, A: BaseAddress, PADS> embedded_io::ErrorType for Serial<I, A, PADS> {
+impl<T: AsRef<RegisterBlock>, PADS> embedded_io::ErrorType for Serial<T, PADS> {
     type Error = Error;
 }
 
-impl<const I: usize, A: BaseAddress, PADS> embedded_io::Write for Serial<I, A, PADS> {
+impl<T: AsRef<RegisterBlock>, PADS> embedded_io::Write for Serial<T, PADS> {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> Result<usize, Self::Error> {
+        let uart = self.uart.as_ref();
         let mut len = 0;
         for c in buf {
-            while !self.uart.lsr.read().is_transmit_holding_empty() {
+            while !uart.lsr.read().is_transmit_holding_empty() {
                 core::hint::spin_loop();
             }
-            unsafe { self.uart.rbr_thr_dll.write(*c as u32) };
+            unsafe { uart.rbr_thr_dll.write(*c as u32) };
             len += 1;
         }
         Ok(len)
     }
     #[inline]
     fn flush(&mut self) -> Result<(), Self::Error> {
-        while !self.uart.lsr.read().is_transmit_empty() {
+        let uart = self.uart.as_ref();
+        while !uart.lsr.read().is_transmit_empty() {
             core::hint::spin_loop();
         }
         Ok(())
     }
 }
 
-impl<const I: usize, A: BaseAddress, PADS> embedded_io::Read for Serial<I, A, PADS> {
+impl<T: AsRef<RegisterBlock>, PADS> embedded_io::Read for Serial<T, PADS> {
     #[inline]
     fn read(&mut self, _buf: &mut [u8]) -> Result<usize, Self::Error> {
         todo!()
@@ -364,18 +362,14 @@ pub trait Pads<const U: usize> {
     const RXD: bool;
 }
 
-impl<A1: BaseAddress, A2: BaseAddress> Pads<0>
-    for (Pad<A1, 18, UartFunc<0>>, Pad<A2, 19, UartFunc<0>>)
-{
+impl<T1, T2> Pads<0> for (Pad<T1, 18, UartFunc<0>>, Pad<T2, 19, UartFunc<0>>) {
     const RTS: bool = false;
     const CTS: bool = false;
     const TXD: bool = true;
     const RXD: bool = true;
 }
 
-impl<A1: BaseAddress, A2: BaseAddress> Pads<1>
-    for (Pad<A1, 28, UartFunc<1>>, Pad<A2, 29, UartFunc<1>>)
-{
+impl<T1, T2> Pads<1> for (Pad<T1, 28, UartFunc<1>>, Pad<T2, 29, UartFunc<1>>) {
     const RTS: bool = false;
     const CTS: bool = false;
     const TXD: bool = true;
