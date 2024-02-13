@@ -3,11 +3,14 @@
 
 pub use sophgo_rom_rt_macros::entry;
 
+/// Rom runtime prelude.
 pub mod prelude {
     pub use crate::{entry, Peripherals};
     pub use sophgo_hal::prelude::*;
 }
 
+#[macro_use]
+mod macros;
 use sophgo_hal::{
     gpio::{Gpio, Input},
     pad::{FMux, Floating, GpioFunc, Pad, PadConfigs, PinMux, PwrPadConfigs, UartFunc},
@@ -15,6 +18,7 @@ use sophgo_hal::{
 
 /// Peripherals available on ROM start.
 pub struct Peripherals {
+    /// Pad function multiplexer peripheral.
     pub pinmux: PINMUX,
     // TODO pub pads: sophgo_hal::gpio::Pads<Static<xxxx>>,
     /// General Purpose Input/Output 0.
@@ -60,21 +64,39 @@ pub struct Peripherals {
     // TODO sd1: sophgo_hal::SD<Static<0x04320000>>,
     // TODO usb: sophgo_hal::USB<Static<0x04340000>>,
     // TODO documents
+    /// SoC pads.
     pub pads: Pads<PINMUX>,
+    /// Low-power Domain General Purpose Input/Output signal port.
     pub pwr_gpio: GpioPort<PWR_GPIO>,
+    /// Low-power Domain SoC pads.
     pub pwr_pads: PwrPads<PWR_PINMUX>,
 }
 
-/// Pad function multiplexer peripheral.
-pub struct PINMUX {
-    _private: (),
-}
-
-impl AsRef<PinMux> for PINMUX {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::pad::PinMux {
-        unsafe { &*(0x03001000 as *const _) }
-    }
+soc! {
+    /// Pad function multiplexer peripheral.
+    pub struct PINMUX => 0x03001000, PinMux;
+    /// General Purpose Input/Output peripheral 0.
+    pub struct GPIO0 => 0x03020000, sophgo_hal::gpio::RegisterBlock;
+    /// General Purpose Input/Output peripheral 1.
+    pub struct GPIO1 => 0x03021000, sophgo_hal::gpio::RegisterBlock;
+    /// General Purpose Input/Output peripheral 2.
+    pub struct GPIO2 => 0x03022000, sophgo_hal::gpio::RegisterBlock;
+    /// General Purpose Input/Output peripheral 3.
+    pub struct GPIO3 => 0x03023000, sophgo_hal::gpio::RegisterBlock;
+    /// Universal Asynchronous Receiver/Transmitter peripheral 0.
+    pub struct UART0 => 0x04140000, sophgo_hal::uart::RegisterBlock;
+    /// Universal Asynchronous Receiver/Transmitter peripheral 1.
+    pub struct UART1 => 0x04150000, sophgo_hal::uart::RegisterBlock;
+    /// Universal Asynchronous Receiver/Transmitter peripheral 2.
+    pub struct UART2 => 0x04160000, sophgo_hal::uart::RegisterBlock;
+    /// Universal Asynchronous Receiver/Transmitter peripheral 3.
+    pub struct UART3 => 0x04170000, sophgo_hal::uart::RegisterBlock;
+    /// Universal Asynchronous Receiver/Transmitter peripheral 4.
+    pub struct UART4 => 0x041C0000, sophgo_hal::uart::RegisterBlock;
+    /// Low-power Domain General Purpose Input/Output peripheral.
+    pub struct PWR_GPIO => 0x05021000, sophgo_hal::gpio::RegisterBlock;
+    /// Low-power Domain pad configuration peripheral.
+    pub struct PWR_PINMUX => 0x05027000, PadConfigs, PwrPadConfigs;
 }
 
 impl AsRef<FMux> for PINMUX {
@@ -91,67 +113,7 @@ impl AsRef<PadConfigs> for PINMUX {
     }
 }
 
-/// General Purpose Input/Output peripheral 0.
-pub struct GPIO0 {
-    _private: (),
-}
-
-impl AsRef<sophgo_hal::gpio::RegisterBlock> for GPIO0 {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::gpio::RegisterBlock {
-        unsafe { &*(0x03020000 as *const _) }
-    }
-}
-
-/// General Purpose Input/Output peripheral 1.
-pub struct GPIO1 {
-    _private: (),
-}
-
-impl AsRef<sophgo_hal::gpio::RegisterBlock> for GPIO1 {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::gpio::RegisterBlock {
-        unsafe { &*(0x03021000 as *const _) }
-    }
-}
-
-/// General Purpose Input/Output peripheral 2.
-pub struct GPIO2 {
-    _private: (),
-}
-
-impl AsRef<sophgo_hal::gpio::RegisterBlock> for GPIO2 {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::gpio::RegisterBlock {
-        unsafe { &*(0x03022000 as *const _) }
-    }
-}
-
-/// General Purpose Input/Output peripheral 3.
-pub struct GPIO3 {
-    _private: (),
-}
-
-impl AsRef<sophgo_hal::gpio::RegisterBlock> for GPIO3 {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::gpio::RegisterBlock {
-        unsafe { &*(0x03023000 as *const _) }
-    }
-}
-
-/// Low-power Domain General Purpose Input/Output peripheral.
-#[allow(non_camel_case_types)]
-pub struct PWR_GPIO {
-    _private: (),
-}
-
-impl AsRef<sophgo_hal::gpio::RegisterBlock> for PWR_GPIO {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::gpio::RegisterBlock {
-        unsafe { &*(0x05021000 as *const _) }
-    }
-}
-
+/// General Purpose Input/Output signal port.
 pub struct GpioPort<T> {
     pub a0: Gpio<T, 0, Input>,
     pub a1: Gpio<T, 1, Input>,
@@ -159,25 +121,7 @@ pub struct GpioPort<T> {
     // TODO a3 to a31
 }
 
-#[allow(non_camel_case_types)]
-pub struct PWR_PINMUX {
-    _private: (),
-}
-
-impl AsRef<PwrPadConfigs> for PWR_PINMUX {
-    #[inline(always)]
-    fn as_ref(&self) -> &PwrPadConfigs {
-        unsafe { &*(0x05027000 as *const _) }
-    }
-}
-
-impl AsRef<PadConfigs> for PWR_PINMUX {
-    #[inline(always)]
-    fn as_ref(&self) -> &PadConfigs {
-        unsafe { &*(0x05027000 as *const _) }
-    }
-}
-
+/// SoC pads.
 pub struct Pads<T> {
     pub sd0_clk: Pad<T, 6, ()>, // TODO sd0_clk default function
     pub uart0_tx: Pad<T, 18, UartFunc<0>>,
@@ -187,80 +131,17 @@ pub struct Pads<T> {
     // TODO ...
 }
 
+/// Low-power Domain SoC pads.
 pub struct PwrPads<T> {
     pub gpio1: Pad<T, 48, GpioFunc<Floating>>,
     pub gpio2: Pad<T, 49, GpioFunc<Floating>>,
     // TODO ...
 }
 
-/// Universal Asynchronous Receiver/Transmitter peripheral 0.
-pub struct UART0 {
-    _private: (),
-}
-
-impl AsRef<sophgo_hal::uart::RegisterBlock> for UART0 {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::uart::RegisterBlock {
-        unsafe { &*(0x04140000 as *const _) }
-    }
-}
-
 impl sophgo_hal::uart::UartExt<0> for UART0 {}
-
-/// Universal Asynchronous Receiver/Transmitter peripheral 1.
-pub struct UART1 {
-    _private: (),
-}
-
-impl AsRef<sophgo_hal::uart::RegisterBlock> for UART1 {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::uart::RegisterBlock {
-        unsafe { &*(0x04150000 as *const _) }
-    }
-}
-
 impl sophgo_hal::uart::UartExt<1> for UART1 {}
-
-/// Universal Asynchronous Receiver/Transmitter peripheral 2.
-pub struct UART2 {
-    _private: (),
-}
-
-impl AsRef<sophgo_hal::uart::RegisterBlock> for UART2 {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::uart::RegisterBlock {
-        unsafe { &*(0x04160000 as *const _) }
-    }
-}
-
 impl sophgo_hal::uart::UartExt<2> for UART2 {}
-
-/// Universal Asynchronous Receiver/Transmitter peripheral 3.
-pub struct UART3 {
-    _private: (),
-}
-
-impl AsRef<sophgo_hal::uart::RegisterBlock> for UART3 {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::uart::RegisterBlock {
-        unsafe { &*(0x04170000 as *const _) }
-    }
-}
-
 impl sophgo_hal::uart::UartExt<3> for UART3 {}
-
-/// Universal Asynchronous Receiver/Transmitter peripheral 3.
-pub struct UART4 {
-    _private: (),
-}
-
-impl AsRef<sophgo_hal::uart::RegisterBlock> for UART4 {
-    #[inline(always)]
-    fn as_ref(&self) -> &sophgo_hal::uart::RegisterBlock {
-        unsafe { &*(0x041C0000 as *const _) }
-    }
-}
-
 impl sophgo_hal::uart::UartExt<4> for UART4 {}
 
 #[cfg(target_arch = "riscv64")]
