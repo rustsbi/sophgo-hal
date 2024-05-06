@@ -6,6 +6,6 @@ Example:
 
 ```bash
 cargo build -p hello-world --target riscv64imac-unknown-none-elf --release
-rust-objcopy --binary-architecture=riscv64 --strip-all -O binary .\target\riscv64imac-unknown-none-elf\release\hello-world .\target\hello-world.bin
-cargo run --bin sophgo-rom-tool -- .\target\hello-world.bin -o .\target\fip.bin
+rust-objcopy --binary-architecture=riscv64 --strip-all -O binary ./target/riscv64imac-unknown-none-elf/release/hello-world ./target/hello-world.bin
+cargo run --bin sophgo-rom-tool -- ./target/hello-world.bin -o ./target/fip.bin
 ```
