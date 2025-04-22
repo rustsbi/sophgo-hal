@@ -1,5 +1,4 @@
 #![no_std]
-#![feature(naked_functions, asm_const)]
 
 pub use sophgo_rom_rt_macros::entry;
 
@@ -145,7 +144,7 @@ impl sophgo_hal::uart::UartExt<3> for UART3 {}
 impl sophgo_hal::uart::UartExt<4> for UART4 {}
 
 #[cfg(target_arch = "riscv64")]
-use core::arch::asm;
+use core::arch::naked_asm;
 
 #[cfg(target_arch = "riscv64")]
 const LEN_STACK: usize = 1 * 1024;
@@ -158,13 +157,13 @@ const LEN_STACK: usize = 1 * 1024;
 pub struct Stack<const N: usize>([u8; N]);
 
 #[cfg(target_arch = "riscv64")]
-#[naked]
+#[unsafe(naked)]
 #[link_section = ".text.entry"]
 #[export_name = "_start"]
 unsafe extern "C" fn entry() -> ! {
     #[link_section = ".bss.uninit"]
     static mut STACK: Stack<LEN_STACK> = Stack([0; LEN_STACK]);
-    asm!(
+    naked_asm!(
         ".option push
         .option arch, -c
             j       1f
@@ -212,7 +211,6 @@ unsafe extern "C" fn entry() -> ! {
         stack = sym STACK,
         hart_stack_size = const LEN_STACK,
         main = sym main,
-        options(noreturn)
     )
 }
 
